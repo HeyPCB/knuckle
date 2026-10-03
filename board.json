@@ -1,0 +1,1050 @@
+{
+  "name": "knuckle",
+  "title": "Knuckle - round FOC joint driver for a GBM2804H-100T, answering as an STS3215 on the Feetech bus",
+  "revision": "A",
+  "brief": "A 35 mm round field-oriented-control driver that mounts on the back of an iPower GBM2804H-100T gimbal motor and answers on the Open Duck Mini's Feetech STS servo bus as an STS3215, a drop-in for the duck's head_yaw (ID 32) and head_roll (ID 33) joints. STM32G431KBU6 (UFQFPN-32) at the centre; a DRV8311H three-phase driver with integrated low-side current sensing, whose own AVDD regulator makes the 3.3 V rail; an MT6701QT magnetic encoder exactly on the motor axis on the motor-facing side, under the shaft magnet; the STS half-duplex bus on two Molex Mini-SPOX 5267-03A daisy-chain sockets (1 DATA, 2 battery, 3 GND) through a 74LVC1G126/125 pair whose direction is the USART's hardware DE; 2S battery input with an AO3401A reverse-polarity FET, an SMAJ12A TVS and a polymer bulk capacitor; motor-rail voltage and NTC sensing; a status LED; SWD on a Tag-Connect footprint; four radial slots that take M2 or M3 screws on the motor's 16 or 19 mm base pattern.",
+  "blocks": [
+    {
+      "block": "knuckle_mcu_g431ku",
+      "as": "mcu",
+      "title": "STM32G431KBU6 (HSI, no crystal)",
+      "nets": {
+        "NRST": "NRST",
+        "DRV_EN": "DRV_EN"
+      },
+      "pinNets": {
+        "U?.18": "PWM_A",
+        "U?.19": "PWM_B",
+        "U?.20": "PWM_C",
+        "U?.9": "VM_SENSE",
+        "U?.10": "ISENSE_A",
+        "U?.11": "ISENSE_B",
+        "U?.12": "ISENSE_C",
+        "U?.5": "TEMP",
+        "U?.2": "NFAULT",
+        "U?.6": "BUS_DE",
+        "U?.7": "BUS_TX",
+        "U?.8": "BUS_RX",
+        "U?.25": "ENC_CS",
+        "U?.26": "ENC_CLK",
+        "U?.27": "ENC_DO",
+        "U?.23": "SWDIO",
+        "U?.24": "SWCLK",
+        "U?.29": "LED_STAT"
+      },
+      "no_connect": [
+        "U?.3",
+        "U?.21",
+        "U?.22",
+        "U?.28",
+        "U?.30"
+      ]
+    },
+    {
+      "block": "knuckle_drv8311h",
+      "as": "drv",
+      "title": "DRV8311H bridge + CSAs; AVDD = 3V3",
+      "nets": {
+        "INHA": "PWM_A",
+        "INHB": "PWM_B",
+        "INHC": "PWM_C",
+        "EN": "DRV_EN",
+        "SOA": "ISENSE_A",
+        "SOB": "ISENSE_B",
+        "SOC": "ISENSE_C",
+        "OUTA": "PHASE_A",
+        "OUTB": "PHASE_B",
+        "OUTC": "PHASE_C",
+        "NFAULT": "NFAULT"
+      }
+    },
+    {
+      "block": "knuckle_encoder_mt6701qt",
+      "as": "enc",
+      "title": "MT6701QT on the motor axis (bottom)",
+      "nets": {
+        "DO": "ENC_DO",
+        "CLK": "ENC_CLK",
+        "CSN": "ENC_CS"
+      }
+    },
+    {
+      "block": "knuckle_sts_bus",
+      "as": "bus",
+      "title": "STS bus: 2 x 5267-03A, 74LVC1G126/125",
+      "nets": {
+        "TX": "BUS_TX",
+        "RX": "BUS_RX",
+        "DE": "BUS_DE"
+      }
+    },
+    {
+      "block": "knuckle_power_in",
+      "as": "pwr",
+      "title": "2S input: reverse FET, TVS, bulk"
+    },
+    {
+      "block": "knuckle_sense",
+      "as": "sense",
+      "title": "VM divider + NTC",
+      "nets": {
+        "VSENSE": "VM_SENSE",
+        "TEMP": "TEMP"
+      }
+    },
+    {
+      "block": "gpio_led",
+      "as": "led",
+      "title": "Status LED (PB6)",
+      "nets": {
+        "SIG": "LED_STAT"
+      },
+      "values": {
+        "D?": "Red (STAT)"
+      }
+    },
+    {
+      "block": "knuckle_swd_tc2030",
+      "as": "swd",
+      "title": "SWD (Tag-Connect TC2030-NL, bottom)",
+      "nets": {
+        "SWDIO": "SWDIO",
+        "SWCLK": "SWCLK",
+        "NRST": "NRST"
+      }
+    },
+    {
+      "block": "knuckle_motor_pads",
+      "as": "motor",
+      "title": "Motor phase solder holes",
+      "nets": {
+        "A": "PHASE_A",
+        "B": "PHASE_B",
+        "C": "PHASE_C"
+      }
+    }
+  ],
+  "pwrFlags": [
+    "GND",
+    "VM",
+    "VBAT"
+  ],
+  "netClasses": [
+    {
+      "name": "MOTOR",
+      "nets": [
+        "PHASE_A",
+        "PHASE_B",
+        "PHASE_C"
+      ],
+      "track": 0.25,
+      "clearance": 0.15,
+      "via": [
+        0.6,
+        0.3
+      ],
+      "currentA": 0.65,
+      "why": "the three phase leads. The GBM2804H-100T's stall current is set by its winding: 7.4 V / sqrt(3) / 5.29 Ohm = 0.81 A peak (0.57 A RMS) on a nominal 2S pack, 0.92 A peak (0.65 A RMS) at 8.4 V, with the ST profiler's per-phase resistance from the actuator spec. 0.25 mm is the widest track that still enters the DRV8311's single 0.2 mm OUTx pads at 0.4 mm pitch with 0.15 mm left to the neighbouring pin (Freerouting runs without neck-down). The class carries a current budget, so the route ladder never narrows it"
+    },
+    {
+      "name": "VM",
+      "nets": [
+        "VM"
+      ],
+      "track": 0.3,
+      "clearance": 0.15,
+      "via": [
+        0.6,
+        0.3
+      ],
+      "currentA": 0.8,
+      "why": "the motor rail after the reverse-polarity FET, which carries the bridge's DC input. At the voltage-limited stall the winding takes VM^2 / (2 x 5.29 Ohm): 6.7 W at 8.4 V, so 0.79 A DC (0.70 A at 7.4 V), more than the 0.65 A phase RMS (an estimate from the spec's resistance; firmware's I2t limit keeps a 39 g motor far below it). 0.3 mm of 1 oz outer copper is about 1.0 A at a 10 C rise by IPC-2221, and 0.3 mm still enters the DRV8311's 0.2 mm VM pad between PGND and VIN_AVDD at 0.15 mm clearance"
+    },
+    {
+      "name": "VBAT",
+      "nets": [
+        "VBAT"
+      ],
+      "track": 0.6,
+      "clearance": 0.2,
+      "via": [
+        0.7,
+        0.35
+      ],
+      "currentA": 1.5,
+      "why": "the battery pass-through from one bus socket to the other, which carries the current of the servos further down the chain: with Knuckles on head_yaw and head_roll at the far end of the duck's neck/head branch, one more Knuckle (about 0.8 A at stall, est.); an STS3215 downstream would add its 2.5 A stall current. 0.6 mm is about 1.65 A on 1 oz outer copper and 0.5 A on 0.5 oz inner copper by IPC-2221 at a 10 C rise; the track routes on In4, and after routing In2 and In4 are both poured VBAT around it. The Mini-SPOX contact is rated 3 A in its catalogue row. 0.8 mm left no lane past the TVS on the left rim"
+    }
+  ],
+  "board": {
+    "width": 35.0,
+    "height": 35.0,
+    "shape": {
+      "type": "circle"
+    },
+    "cutouts": [
+      {
+        "type": "polygon",
+        "points": [
+          [
+            20.7527,
+            23.1569
+          ],
+          [
+            24.2175,
+            26.6217
+          ],
+          [
+            26.6217,
+            24.2175
+          ],
+          [
+            23.1569,
+            20.7527
+          ]
+        ],
+        "fillet": 1.69
+      },
+      {
+        "type": "polygon",
+        "points": [
+          [
+            11.8431,
+            20.7527
+          ],
+          [
+            8.3783,
+            24.2175
+          ],
+          [
+            10.7825,
+            26.6217
+          ],
+          [
+            14.2473,
+            23.1569
+          ]
+        ],
+        "fillet": 1.69
+      },
+      {
+        "type": "polygon",
+        "points": [
+          [
+            14.2473,
+            11.8431
+          ],
+          [
+            10.7825,
+            8.3783
+          ],
+          [
+            8.3783,
+            10.7825
+          ],
+          [
+            11.8431,
+            14.2473
+          ]
+        ],
+        "fillet": 1.69
+      },
+      {
+        "type": "polygon",
+        "points": [
+          [
+            23.1569,
+            14.2473
+          ],
+          [
+            26.6217,
+            10.7825
+          ],
+          [
+            24.2175,
+            8.3783
+          ],
+          [
+            20.7527,
+            11.8431
+          ]
+        ],
+        "fillet": 1.69
+      }
+    ],
+    "layers": 6,
+    "origin": [
+      100.0,
+      100.0
+    ],
+    "rules": {
+      "clearance": 0.15,
+      "track": 0.15,
+      "via": [
+        0.5,
+        0.25
+      ],
+      "edge_clearance": 0.5,
+      "hole_to_hole": 0.5,
+      "min_through_hole": 0.25,
+      "min_track": 0.1,
+      "why_min_track": "the default class is 0.15 mm, so 0.1 leaves room for Freerouting's rounding; JLC's multilayer minimum is 0.09"
+    },
+    "planes": {
+      "In1.Cu": "GND"
+    },
+    "keepouts": [
+      {
+        "name": "fastener_45_r8p0",
+        "circle": {
+          "at": [
+            23.157,
+            23.157
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_45_r8p75",
+        "circle": {
+          "at": [
+            23.687,
+            23.687
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_45_r9p5",
+        "circle": {
+          "at": [
+            24.218,
+            24.218
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_135_r8p0",
+        "circle": {
+          "at": [
+            11.843,
+            23.157
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_135_r8p75",
+        "circle": {
+          "at": [
+            11.313,
+            23.687
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_135_r9p5",
+        "circle": {
+          "at": [
+            10.782,
+            24.218
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_225_r8p0",
+        "circle": {
+          "at": [
+            11.843,
+            11.843
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_225_r8p75",
+        "circle": {
+          "at": [
+            11.313,
+            11.313
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_225_r9p5",
+        "circle": {
+          "at": [
+            10.782,
+            10.782
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_315_r8p0",
+        "circle": {
+          "at": [
+            23.157,
+            11.843
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_315_r8p75",
+        "circle": {
+          "at": [
+            23.687,
+            11.313
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "fastener_315_r9p5",
+        "circle": {
+          "at": [
+            24.218,
+            10.782
+          ],
+          "d": 6.0
+        },
+        "layers": "all",
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "magnet_bottom_left",
+        "rect": [
+          12.0,
+          12.0,
+          15.2,
+          23.0
+        ],
+        "layers": [
+          "B.Cu"
+        ],
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "magnet_bottom_top",
+        "rect": [
+          15.2,
+          12.0,
+          23.0,
+          15.2
+        ],
+        "layers": [
+          "B.Cu"
+        ],
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "magnet_bottom_low",
+        "rect": [
+          15.2,
+          19.8,
+          23.0,
+          23.0
+        ],
+        "layers": [
+          "B.Cu"
+        ],
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "magnet_bottom_right",
+        "rect": [
+          21.45,
+          15.2,
+          23.0,
+          19.8
+        ],
+        "layers": [
+          "B.Cu"
+        ],
+        "no": [
+          "footprints"
+        ]
+      },
+      {
+        "name": "encoder_inner_no_tracks",
+        "circle": {
+          "at": [
+            17.5,
+            17.5
+          ],
+          "d": 6.0
+        },
+        "layers": [
+          "In2.Cu",
+          "In3.Cu",
+          "In4.Cu"
+        ],
+        "no": [
+          "tracks"
+        ]
+      },
+      {
+        "name": "phase_lane_outer_only",
+        "rect": [
+          28.55,
+          9.0,
+          33.0,
+          20.0
+        ],
+        "layers": [
+          "In2.Cu",
+          "In3.Cu",
+          "In4.Cu"
+        ],
+        "no": [
+          "tracks"
+        ]
+      }
+    ],
+    "notes": "Diameter 35 mm, the motor's own outer diameter. The four cutouts are radial slots 3.4 mm wide (M3 clearance; M2 fits) whose screw centres run from r = 8.0 to 9.5 mm on the diagonals: the GBM2804H's base pattern is a 16 mm pair and a 19 mm pair on perpendicular axes, and a square 12 mm on a side is r = 8.49. Turned 45 degrees from the axes so no screw lands under a bus socket. The fastener_* circles keep every footprint off the screw heads (top) and the printed standoff's bosses (bottom) wherever along the slot the screw ends up. The magnet_* rectangles keep the bottom face clear in an 11 x 11 mm square around the axis except for the MT6701QT and its 100 nF, so the spinning magnet holder sees nothing but the encoder. encoder_inner_no_tracks keeps inner-layer tracks out of a 6 mm circle on the axis (the MT6701QT is 3 mm square), so no lone track carries battery or motor-rail current straight under the sensor (on the first 6-layer route, VBAT took In4 through the centre; a 9 mm circle walled in the MCU's bottom-edge escapes). The VBAT and VM pours do cover the axis and spread that current over the whole layer; a current sheet's field at the sensor is on the order of 1 G against the magnet's 200-1000 G (an estimate, not measured). phase_lane_outer_only keeps inner-layer tracks out of the strip between the driver's outputs and the motor holes, so the 0.25 mm phase tracks stay on 1 oz outer copper (on the route before it, PHASE_C took 6.8 mm of In2).",
+    "pours": {
+      "In2.Cu": "VBAT",
+      "In3.Cu": "VM",
+      "In4.Cu": "VBAT"
+    },
+    "why_layers": "6 layers, five of them routed: on 4 layers (F / In1 GND / In2 / B) the same parts routed 122 -> 8, 122 -> 4 and 121 -> 5 open over three placements (2026-10-02), every time into the 0.4 mm-pitch driver whose escape lanes the four screw slots squeeze. Only In1 is a plane during routing, so F, In2, In3, In4 and B all carry tracks. After routing In2 and In4 are poured VBAT, as the actuator spec asks for the pass-through (two layers: In4 carries it as a 0.6 mm track, which the pour engulfs, and In2 adds a second sheet in parallel), and In3 VM (the polymer bulk sits at the far rim from the driver). In1 stays the unbroken GND plane under F.Cu; F.Cu and B.Cu are poured GND."
+  },
+  "placement": {
+    "bus:J1?": {
+      "lock": [
+        15.0,
+        5.05
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "bus socket IN at the top: pins in a row along x with pin 2 on the vertical axis, courtyard from y -16.1 to -10.1 mm about the centre (the spec's position)"
+    },
+    "bus:J2?": {
+      "lock": [
+        20.0,
+        29.95
+      ],
+      "from_center": false,
+      "rot": 180,
+      "why": "bus socket OUT opposite J1, turned 180 degrees so the two sockets are point-symmetric about the motor axis"
+    },
+    "mcu:U?": {
+      "lock": [
+        17.5,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "MCU on the axis, top face, turned 90 degrees: its ADC pins (PA4-PA7) and the bridge enable (PB0) face the DRV8311, its TIM1 pins (PA8-PA10) face up toward the driver's INH pins, SPI1 faces the encoder's SSI pins underneath"
+    },
+    "enc:U?": {
+      "lock": [
+        17.5,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "MT6701QT exactly on the motor axis on the motor-facing face; turned so its SSI pins (DO, CLK, CSN) sit under the MCU's SPI1 edge"
+    },
+    "enc:C?": {
+      "lock": [
+        20.7,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 270,
+      "side": "bottom",
+      "why": "the encoder's 100 nF at r = 3.2 mm across its VDD and GND pins, inside the magnet pocket where the spec allows it (r >= 3.0)"
+    },
+    "drv:U?": {
+      "lock": [
+        27.0,
+        18.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "driver 9.5 mm right of the axis (the spec keeps it and the phase copper at r >= 6 mm), its OUTC/B/A edge facing the motor holes; the areas above it (PWM in) and below it (current sense out) are kept free of parts for routing"
+    },
+    "motor:J?": {
+      "lock": [
+        31.3,
+        19.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "the three phase holes at the right rim, C at the top and A at the bottom in the order of the driver's OUTC/B/A pins, so the phases fan out without crossing"
+    },
+    "swd:J?": {
+      "lock": [
+        3.7,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "Tag-Connect pads on the motor-facing face at the left rim: zero height; flash before the motor goes on. Its three alignment holes are kept clear of top-side pads"
+    },
+    "mcu:C1?": {
+      "lock": [
+        15.6,
+        21.5
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "VDD (pin 1) decoupling below the MCU"
+    },
+    "mcu:C2?": {
+      "lock": [
+        21.72,
+        15.42
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "VDD (pin 17) decoupling at the MCU's top-right corner, below the PWM lane"
+    },
+    "mcu:C3?": {
+      "lock": [
+        21.72,
+        16.52
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "VDDA 100 nF at the MCU's VDDA / VSSA pins"
+    },
+    "mcu:C4?": {
+      "lock": [
+        23.72,
+        15.42
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "VDDA 1 uF beside the VDD cap"
+    },
+    "mcu:C5?": {
+      "lock": [
+        8.45,
+        20.85
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "NRST filter on the bottom face beside the bus passives, out of the MCU's bottom-edge fan-out"
+    },
+    "mcu:R1?": {
+      "lock": [
+        13.6,
+        18.9
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "BOOT0 pull-down beside the MCU's PB8"
+    },
+    "mcu:R2?": {
+      "lock": [
+        23.6,
+        17.6
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "bridge-enable pull-down, bottom face beside the driver's INLC pin"
+    },
+    "drv:C1?": {
+      "lock": [
+        29.5,
+        21.75
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "VM 100 nF below the phase lane"
+    },
+    "drv:C2?": {
+      "lock": [
+        31.35,
+        22.15
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "VM 10 uF below the phase lane"
+    },
+    "drv:C3?": {
+      "lock": [
+        27.9,
+        22.3
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "VIN_AVDD 100 nF below the phase lane"
+    },
+    "drv:C4?": {
+      "lock": [
+        29.65,
+        23.9
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "VIN_AVDD 10 uF"
+    },
+    "drv:C5?": {
+      "lock": [
+        28.9,
+        20.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "charge-pump capacitor tight against the driver's CP pin at its lower-right corner, so the CP track does not cross the current-sense escapes"
+    },
+    "drv:C6?": {
+      "lock": [
+        26.8,
+        15.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "AVDD output capacitor above the driver's AVDD / AGND pins, left of the INH pins"
+    },
+    "drv:C7?": {
+      "lock": [
+        27.0,
+        14.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "CSAREF capacitor on the bottom face above the driver, out of the sense lines' via field below it"
+    },
+    "drv:R1?": {
+      "lock": [
+        29.6,
+        23.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "nFAULT pull-up on the bottom face at the lower right"
+    },
+    "drv:R2?": {
+      "lock": [
+        24.95,
+        15.25
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "nSLEEP pull-up from VM, bottom face above the driver"
+    },
+    "drv:D?": {
+      "lock": [
+        28.85,
+        14.45
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "nSLEEP zener clamp, bottom face above the driver"
+    },
+    "bus:U1?": {
+      "lock": [
+        7.45,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "transmit buffer in the left lobe, beside the MCU's USART2 pins (PA1-PA3)"
+    },
+    "bus:U2?": {
+      "lock": [
+        11.15,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "receive buffer beside the transmit buffer"
+    },
+    "bus:C1?": {
+      "lock": [
+        7.4,
+        15.4
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "transmit buffer decoupling under it, bottom face"
+    },
+    "bus:C2?": {
+      "lock": [
+        7.4,
+        19.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "receive buffer decoupling under it, bottom face"
+    },
+    "bus:R1?": {
+      "lock": [
+        9.4,
+        16.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "DATA series 100 R under the buffers, bottom face"
+    },
+    "bus:R2?": {
+      "lock": [
+        9.4,
+        17.65
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "DATA pull-up, bottom face"
+    },
+    "bus:R3?": {
+      "lock": [
+        11.0,
+        16.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "RX pull-up, bottom face"
+    },
+    "bus:R4?": {
+      "lock": [
+        11.05,
+        19.0
+      ],
+      "from_center": false,
+      "rot": 90,
+      "side": "bottom",
+      "why": "DE pull-down, bottom face"
+    },
+    "bus:D?": {
+      "lock": [
+        9.4,
+        19.0
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "DATA ESD diode, bottom face"
+    },
+    "pwr:Q?": {
+      "lock": [
+        3.7,
+        17.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "reverse-polarity FET at the middle of the left rim, between the TVS and the bulk: its drain is VBAT's third pin, so the battery's shortest tree runs J1 -> left rim -> J2 instead of straight through the driver (on the first 6-layer route VBAT took In4 under the DRV8311)"
+    },
+    "pwr:R?": {
+      "lock": [
+        3.3,
+        21.2
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "FET gate resistor below Q1"
+    },
+    "pwr:D?": {
+      "lock": [
+        5.9,
+        10.9
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "SMAJ12A along the left rim above the bus buffers; at 7.1 mm long the rim column is the one place on this circle with the slots where it fits"
+    },
+    "pwr:C?": {
+      "lock": [
+        5.9,
+        24.5
+      ],
+      "from_center": false,
+      "rot": 90,
+      "why": "polymer bulk along the left rim below the bus buffers, on VM"
+    },
+    "sense:R1?": {
+      "lock": [
+        16.5,
+        24.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "VM divider top resistor under the bottom lobe, bottom face, next to PA4"
+    },
+    "sense:R2?": {
+      "lock": [
+        18.6,
+        24.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "VM divider bottom resistor, bottom face"
+    },
+    "sense:C?": {
+      "lock": [
+        17.5,
+        25.8
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "VM divider filter, bottom face"
+    },
+    "sense:TH?": {
+      "lock": [
+        29.9,
+        21.15
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "NTC on the bottom face at the driver's output corner"
+    },
+    "sense:R3?": {
+      "lock": [
+        30.0,
+        22.4
+      ],
+      "from_center": false,
+      "rot": 0,
+      "side": "bottom",
+      "why": "NTC pull-up beside it, bottom face"
+    },
+    "led:D?": {
+      "lock": [
+        10.35,
+        6.6
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "status LED in the top-left corner beside J1, on PB6 from the MCU's free left edge"
+    },
+    "led:R?": {
+      "lock": [
+        10.35,
+        4.9
+      ],
+      "from_center": false,
+      "rot": 0,
+      "why": "status LED resistor"
+    }
+  },
+  "route": {
+    "passes": 30,
+    "fanout": true,
+    "solve_s": 600,
+    "via_in_pad_mm": 1.85,
+    "why": "a via in the DRV8311's 1.9 mm and the MCU's 3.45 mm exposed pads (their 0.4 / 0.5 mm-pitch pins wall the pads in); the MT6701QT's 1.7 mm pad sits directly under the MCU's, so the MCU's via lands in it too. 1.85 rather than 1.8 keeps vias out of the SMA TVS's 1.8 mm pads. The outline is stated, so it is never grown"
+  },
+  "stitch_pitch": 3.0,
+  "silk": {
+    "words": {
+      "bus:J1?": "KNUCKLE",
+      "bus:J2?": "STS BUS",
+      "led:D?": "STAT",
+      "swd:J?": "SWD",
+      "motor:J?": "MOTOR"
+    },
+    "title": [
+      {
+        "text": "KNUCKLE",
+        "y": 9.0,
+        "size": 1.2,
+        "bold": true
+      },
+      {
+        "text": "STS3215 drop-in",
+        "y": 10.8,
+        "size": 0.8
+      },
+      {
+        "text": "head_yaw  ID 32",
+        "y": 12.2,
+        "size": 0.8
+      },
+      {
+        "text": "head_roll ID 33",
+        "y": 13.6,
+        "size": 0.8
+      },
+      {
+        "text": "rev {revision}",
+        "y": 15.0,
+        "size": 0.8
+      },
+      {
+        "text": "unfabricated",
+        "y": 10.4,
+        "size": 0.8
+      }
+    ]
+  },
+  "captions": {
+    "place_3d": "KiCad's raytracer on the placed Knuckle: the MCU on the motor axis, the DRV8311 and the motor holes on the right, the two bus sockets opposite each other, four radial screw slots on the diagonals.",
+    "done_3d": "STM32G431KBU6, DRV8311H (AVDD makes 3V3), MT6701QT under the magnet on the back, 74LVC1G126/125 STS bus, 2 x Molex 5267-03A, AO3401A + SMAJ12A input."
+  }
+}

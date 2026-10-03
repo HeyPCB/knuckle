@@ -1,0 +1,231 @@
+{
+  "frame": "z = 0 at the motor base face, +z toward the board; X/Y the board's axes, +Y toward J1",
+  "board": {
+    "thickness_step_mm": 1.68,
+    "bottom_face_z": 6.085,
+    "top_face_z": 7.765,
+    "outline_mm": [
+      35.0,
+      35.0
+    ]
+  },
+  "encoder": {
+    "body_below_bottom_face_mm": 0.785,
+    "face_z": 5.3,
+    "offset_from_axis_mm": 0.0,
+    "offset_limit_mm": 0.3
+  },
+  "magnet_holder": {
+    "z": [
+      0.2,
+      4.3
+    ],
+    "od_mm": 9.0,
+    "running_gap_above_base_mm": 0.2,
+    "closest_bottom_part": "C13",
+    "clearance_to_it_mm": 1.285
+  },
+  "air_gap": {
+    "target_mm": 1.0,
+    "measured_magnet_to_ic_mm": 1.0,
+    "window_mm": [
+      0.5,
+      2.0
+    ]
+  },
+  "standoff": {
+    "height_mm": 6.085,
+    "closest_bottom_part": "R4",
+    "clearance_to_it_mm": 0.611,
+    "ring_to_holder_radial_mm": 1.0,
+    "screw_points_mm": [
+      [
+        5.66,
+        5.66
+      ],
+      [
+        -5.66,
+        -5.66
+      ],
+      [
+        -6.72,
+        6.72
+      ],
+      [
+        6.72,
+        -6.72
+      ]
+    ]
+  },
+  "cover": {
+    "od_mm": 38.0,
+    "roof_underside_z": 14.165,
+    "top_z": 16.165,
+    "closest_top_part": "C4",
+    "clearance_to_it_mm": 0.527,
+    "header_clearance_mm": {
+      "J2": 0.64,
+      "J1": 0.64
+    },
+    "openings": {
+      "J1": {
+        "opening_mm": [
+          10.7,
+          5.7
+        ],
+        "body_mm": [
+          9.9,
+          4.9
+        ],
+        "margin_min_mm": 0.4,
+        "body_top_below_roof_mm": 0.5
+      },
+      "J2": {
+        "opening_mm": [
+          10.7,
+          5.7
+        ],
+        "body_mm": [
+          9.9,
+          4.9
+        ],
+        "margin_min_mm": 0.4,
+        "body_top_below_roof_mm": 0.5
+      }
+    }
+  },
+  "screws": {
+    "size": "M2",
+    "grip_mm": 14.16,
+    "length_needed_mm": 17.16,
+    "standard_length_mm": 18
+  },
+  "horn_adapter": {
+    "sts_horn_od_mm": 20.0,
+    "sts_horn_thickness_mm": 2.5,
+    "sts_hole_d_mm": 2.5,
+    "sts_bolt_circle_mm": 14.0,
+    "sts_holes_mm": [
+      [
+        4.95,
+        -4.95
+      ],
+      [
+        -4.95,
+        -4.95
+      ],
+      [
+        -4.95,
+        4.95
+      ],
+      [
+        4.95,
+        4.95
+      ]
+    ],
+    "adapter_od_mm": 23.0,
+    "adapter_thick_mm": 4.0,
+    "adapter_insert_holes_mm": [
+      [
+        -4.95,
+        -4.95
+      ],
+      [
+        4.95,
+        -4.95
+      ],
+      [
+        -4.95,
+        4.95
+      ],
+      [
+        4.95,
+        4.95
+      ]
+    ],
+    "pattern_deviation_mm": 0.0,
+    "rotor_slot_bolt_circle_mm": [
+      12.0,
+      16.98
+    ],
+    "z": [
+      -19.0,
+      -15.0
+    ]
+  },
+  "stack": {
+    "horn_face_z": -19.0,
+    "rotor_top_z_est": -15.0,
+    "base_face_z": 0.0,
+    "magnet_face_z": 4.3,
+    "board_bottom_z": 6.085,
+    "board_top_z": 7.765,
+    "tallest_top_part": "D3",
+    "tallest_top_part_z": 9.985,
+    "header_top_z": 13.665,
+    "cover_top_z": 16.165,
+    "overall_mm": 35.165
+  },
+  "estimated_inputs": {
+    "motor": {
+      "height_mm": 15.0,
+      "rotor_od_mm": 35.0,
+      "shaft_od_mm": 7.0,
+      "shaft_stub_mm": 1.2,
+      "base_pairs": [
+        [
+          16.0,
+          45.0
+        ],
+        [
+          19.0,
+          135.0
+        ]
+      ],
+      "screw": "M2"
+    },
+    "magnet": {
+      "d_mm": 6.0,
+      "t_mm": 2.5
+    },
+    "header_height_mm": 5.9
+  },
+  "stl": {
+    "standoff": {
+      "watertight": true,
+      "volume_mm3": 931.2,
+      "extents_mm": [
+        25.0,
+        24.99,
+        6.09
+      ]
+    },
+    "magnet_holder": {
+      "watertight": true,
+      "volume_mm3": 150.6,
+      "extents_mm": [
+        9.0,
+        9.0,
+        4.1
+      ]
+    },
+    "cover": {
+      "watertight": true,
+      "volume_mm3": 4534.8,
+      "extents_mm": [
+        38.0,
+        37.99,
+        16.16
+      ]
+    },
+    "horn_adapter": {
+      "watertight": true,
+      "volume_mm3": 1030.3,
+      "extents_mm": [
+        23.0,
+        22.99,
+        4.0
+      ]
+    }
+  }
+}
